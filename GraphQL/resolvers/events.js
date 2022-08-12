@@ -16,20 +16,27 @@ module.exports = {
     }
   },
 
-  createEvent: async (args) => {
+  createEvent: async (args, req) => {
+    // isAuth middleware from app.js passes this information:
+    if (!req.isAuth) {
+      throw new Error("Unauthorised access for non subscribers");
+    }
     const event = new Event({
       title: args.eventInput.title,
       description: args.eventInput.description,
       price: +args.eventInput.price,
       date: new Date(args.eventInput.date),
-      creator: "62f3b192f74add192117f8da",
+
+      /*   the id of the creator is passed here from 
+      the isAut middleware used in app.js*/
+      creator: req.userId,
     });
     let createdEvent;
 
     try {
       const result = await event.save();
       createdEvent = transformEvent(result);
-      const creator = await User.findById("62f3b192f74add192117f8da");
+      const creator = await User.findById(req.userId);
 
       if (!creator) {
         throw new Error("user not found");
